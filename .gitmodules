@@ -1,0 +1,9 @@
+[submodule "love2d/nacho8"]
+	path = love2d/nacho8
+	url = https://github.com/DPS2004/nacho8.git
+[submodule "commandline/nacho8"]
+	path = commandline/nacho8
+	url = https://github.com/DPS2004/nacho8.git
+[submodule "love2d/lovebird"]
+	path = love2d/lovebird
+	url = https://github.com/rxi/lovebird.git
