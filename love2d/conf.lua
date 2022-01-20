@@ -4,9 +4,10 @@ function love.conf(t) -- love2d config
   t.console = true
   
   prgconf = { --chip8 config
-    file = "nacho8/roms/woodsman.ch8", -- file to load into memory
+    file = "nacho8/roms/waitforkey.ch8", -- file to load into memory
+    outfile = "nacho8/roms/out.nch", -- output file for dumps
     scale = 8, -- screen scale
-    chatty = false, 
+    chatty = true, 
     choutput = {-- what things do we want to hear about from chatty?
       all = true, 
       ops = true,
@@ -18,8 +19,8 @@ function love.conf(t) -- love2d config
     -- cosmac
     -- bisqwit
     -- custom
-    mode = "cosmac",
-    framebyframe = false,
+    mode = "common",
+    framebyframe = true,
     -- the custom mode gets loaded from this table
     custom = {
       sw = 64, -- screen width
@@ -42,7 +43,7 @@ function love.conf(t) -- love2d config
       savedump = '5'
     },
     extras = {-- misc things to pass directly to chip 8, mostly debug
-      dumper = true, -- enable to save a very janky human-readable ish file
+      dumper = false, -- see nacho.lua for information on dumper mode
     }
     
     
@@ -76,6 +77,12 @@ function love.conf(t) -- love2d config
   prgconf.keys[0xf] = 'v'
   
   
+  prgconf.runonload = function()
+  
+    ccode = nchcompile('nacho8/roms/waitforkey.nch')
+    chip = nacho.loadtabletochip(ccode,chip)
+    nchdecompile(ccode,prgconf.mode,prgconf.custom)
+  end
   
   
 end

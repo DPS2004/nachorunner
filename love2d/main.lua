@@ -23,7 +23,71 @@ function love.load() -- called once at the very start of execution
   
   nacho = require('nacho8/nacho') -- load the chip8 interpreter
   
-  nacho.setup() -- load bit ops (pass no arguments to just use luajit
+  nacho.setup() -- load bit ops (pass no arguments to just use luajit)
+  
+  
+  function getparentdir(fname)
+    local fname2 = ""
+    local offset = 0
+    if string.sub(fname,-1) == "/" then
+      fname = string.sub(fname,1,-2)
+    end
+    fname2 = fname:match(".*/(.*)")
+    if fname2 then
+      fname = string.sub(fname,1,-(string.len(fname2)+1))
+      return fname
+    else
+      return ""
+    end
+  end
+  
+  
+  function nchcompile(nch)
+    
+    
+    nacho.loadspritepng = function(fn)
+      local imagedata = love.image.newImageData(getparentdir(nch)..fn)
+      local spritedata = {}
+      local sprite = {}
+      for y=0,imagedata:getHeight()-1 do
+        local r, g, b = imagedata:getPixel(0, y)
+        if r == 1 and b == 0 then
+          table.insert(spritedata,sprite)
+          sprite = {}
+        else
+          local strip = 0
+          for x=0,7 do
+            r, g, b = imagedata:getPixel(x, y)
+            strip = strip + (128/2^x)*r
+          end
+          table.insert(sprite,strip)
+        end
+      end
+      if sprite ~= {} then
+        table.insert(spritedata,sprite)
+      end
+      return spritedata
+      
+    end
+    
+    
+    
+    local contents, size = love.filesystem.read(nch)
+    return nacho.compile(contents,basefile)
+    
+    
+    
+    
+    
+  end
+  
+  function nchdecompile(ccode)
+    local file = io.open(prgconf.outfile,'w')
+    local dump = nacho.decompile(ccode)
+    file:write(dump)
+    print(dump)
+    file:close()
+  end
   
   function loadtochip(file,chip) --load a file into chip8's memory
     local contents, size = love.filesystem.read(file)
@@ -36,6 +100,9 @@ function love.load() -- called once at the very start of execution
     end
     return chip
   end
+  
+ 
+  
   
   chip = nacho.init(prgconf.mode,prgconf.custom,prgconf.extras) -- init chip 8
   chip = loadtochip(prgconf.file,chip) --load file defined in conf.lua
@@ -56,6 +123,9 @@ function love.load() -- called once at the very start of execution
 
   love.window.setMode(chip.cf.sw*prgconf.scale, chip.cf.sh*prgconf.scale, {resizable=true}) -- set the love2d window size to that of the config
 
+  if prgconf.runonload then
+    prgconf.runonload()
+  end
   
 end
 
@@ -82,7 +152,7 @@ function love.keypressed(key, scancode, isrepeat)
   end
   
   if key == prgconf.hotkeys.savedump then
-    local file = io.open(prgconf.file ..'d','w')
+    local file = io.open(prgconf.outfile,'w')
     local dump = chip.savedump()
     file:write(dump)
     print(dump)
